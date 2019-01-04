@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using CommandLine;
 using ContentFactory.Features.TexturePacker;
 using ContentFactory.Verbs;
@@ -8,39 +7,10 @@ using Newtonsoft.Json.Serialization;
 
 namespace ContentFactory
 {
-    public class BuildTask
-    {
-        public string Type { get; set; }
-        public Dictionary<string, object> Parameters { get; set; } = new Dictionary<string, object>();
-    }
-
-    public class ContentFile
-    {
-        public string Title { get; set; } = "Background elements";
-        public string Description { get; set; } = @"You may use these graphics in personal and commercial projects. Credit (Kenney or www.kenney.nl) would be nice but is not mandatory.";
-        public string Author { get; set; } = "Kenney Vleugels";
-        public string Website { get; set; } = "www.kenney.nl";
-        public string License { get; set; } = "Creative Commons Zero, CC0";
-        public string LicenseUrl { get; set; } = "http://creativecommons.org/publicdomain/zero/1.0/";
-        public string Copyright { get; set; } = "Public Domain (CC0)";
-        public BuildTask[] Tasks { get; set; } = new []{
-            new BuildTask {
-                Type = "pack",
-                Parameters = {
-                    { "sourceDirectory", "cake_64" }
-                }
-            },
-            new BuildTask {
-                Type = "pack",
-                Parameters = {
-                    { "sourceDirectory", "cake_128" }
-                }
-            }
-        };
-    }
-
     public class Program
     {
+        private const string _contentFileName = "content.json";
+
         public static int Main(string[] args)
         {
             using (var commandLineParser = Parser.Default)
@@ -54,28 +24,48 @@ namespace ContentFactory
             }
         }
 
-        private static int New(NewOptions options)
+        private static JsonSerializer CreateSerializer()
         {
-            var serializer = new JsonSerializer
+            return new JsonSerializer
             {
                 Formatting = Formatting.Indented,
                 ContractResolver = new CamelCasePropertyNamesContractResolver()
             };
-            using (var writer = new StreamWriter("content.json"))
+        }
+
+        private static int New(NewOptions options)
+        {
+            var serializer = CreateSerializer();
+            using (var streamWriter = new StreamWriter(_contentFileName))
+            using (var jsonWriter = new JsonTextWriter(streamWriter))
             {
-                serializer.Serialize(writer, new ContentFile());
+                serializer.Serialize(jsonWriter, new ContentFile());
             }
             return 0;
         }
 
         private static int Build(BuildOptions options)
         {
-            var directory = Path.GetFullPath(options.TargetDirectory);
-            var directoryName = Path.GetFileName(directory);
-            var imagePath = options.ImagePath ?? $"{directoryName}.png";
-            var dataPath = options.DataPath ?? $"{directoryName}.json";
-            var packer = new TexturePacker(directory, imagePath, dataPath);
-            packer.Pack();
+            var serializer = CreateSerializer();
+            var contentFilePath = Path.Combine(options.ContentPath, _contentFileName);
+
+            using (var streamReader = new StreamReader(contentFilePath))
+            using (var jsonReader = new JsonTextReader(streamReader))
+            {
+                var contentFile = serializer.Deserialize<ContentFile>(jsonReader);
+
+                foreach (var task in contentFile.Tasks)
+                {
+                    var sourceDirectory = task.Parameters["sourceDirectory"].ToString();
+                    var directory = Path.GetFullPath(Path.Combine(options.ContentPath, sourceDirectory));
+                    var directoryName = Path.GetFileName(directory);
+                    var imagePath = Path.Combine(options.ContentPath, $"{directoryName}.png");
+                    var dataPath = Path.Combine(options.ContentPath, $"{directoryName}.json");
+                    var packer = new TexturePacker(directory, imagePath, dataPath);
+                    packer.Pack();
+                }
+            }
+
             return 0;
         }
     }
