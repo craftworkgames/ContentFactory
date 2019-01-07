@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using CommandLine;
 using ContentFactory.Features.TexturePacker;
 using ContentFactory.Verbs;
@@ -13,14 +14,22 @@ namespace ContentFactory
 
         public static int Main(string[] args)
         {
-            using (var commandLineParser = Parser.Default)
+            try
             {
-                return commandLineParser
-                    .ParseArguments<BuildOptions, NewOptions>(args)
-                    .MapResult(
-                        (BuildOptions options) => Build(options),
-                        (NewOptions options) => New(options),
-                        errors => 1);
+                using (var commandLineParser = Parser.Default)
+                {
+                    return commandLineParser
+                        .ParseArguments<BuildOptions, NewOptions>(args)
+                        .MapResult(
+                            (BuildOptions options) => Build(options),
+                            (NewOptions options) => New(options),
+                            errors => 1);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return 2;
             }
         }
 

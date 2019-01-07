@@ -1,5 +1,6 @@
 ﻿namespace ContentFactory
 {
+    // TODO: Create sensible defaults.
     public class ContentFile
     {
         public string Title { get; set; } = "Background elements";

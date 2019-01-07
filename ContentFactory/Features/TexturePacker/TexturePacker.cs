@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.Primitives;
@@ -53,7 +54,9 @@ namespace ContentFactory.Features.TexturePacker
 
                         CopyImageToImage(sourceImage, sourceRectangle, targetImage, targetOffset);
 
-                        data.Frames.Add(new TexturePackerFrame(filePath, sourceRectangle));
+                        var frame = new TexturePackerFrame(filePath, sourceRectangle, new Size(sourceImage.Width, sourceImage.Height), trimmed: true);
+
+                        data.Frames.Add(frame);
 
                         targetOffset.X += sourceRectangle.Width;
 
@@ -78,9 +81,18 @@ namespace ContentFactory.Features.TexturePacker
 
         private static void SaveDataFile(TexturePackerData data, string targetDataPath)
         {
+            var serializer = new JsonSerializer
+            {
+                ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                Formatting = Formatting.Indented,
+                Converters =
+                {
+                    new RectangleJsonConverter(),
+                    new SizeJsonConverter()
+                }
+            };
             using (var fileStream = new StreamWriter(targetDataPath))
             {
-                var serializer = new JsonSerializer { Formatting = Formatting.Indented };
                 serializer.Serialize(fileStream, data);
             }
         }

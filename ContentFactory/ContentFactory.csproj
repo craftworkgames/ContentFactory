@@ -4,6 +4,13 @@
     <OutputType>Exe</OutputType>
     <TargetFrameworks>netcoreapp2.1;net472</TargetFrameworks>
     <AssemblyName>content</AssemblyName>
+    <Company>Craftwork Games</Company>
+    <Product>Content Factory</Product>
+    <Authors>Dylan Wilson</Authors>
+    <PackageProjectUrl>https://github.com/craftworkgames/ContentFactory</PackageProjectUrl>
+    <PackageTags>game, content, build, monogame</PackageTags>
+    <Description>a cross-platform command line tool for building game content.</Description>
+    <PackageLicenseUrl>https://github.com/craftworkgames/ContentFactory/blob/master/LICENSE</PackageLicenseUrl>
   </PropertyGroup>
 
   <ItemGroup>
